@@ -278,6 +278,7 @@ GEM
 
 PLATFORMS
   x86_64-darwin-18
+  x86_64-darwin-21
   x86_64-linux
 
 DEPENDENCIES
@@ -315,4 +316,4 @@ DEPENDENCIES
   will_paginate (= 3.1.8)
 
 BUNDLED WITH
-   2.2.17
+   2.3.4
