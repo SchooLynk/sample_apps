@@ -6,6 +6,18 @@ class SessionsController < ApplicationController
     user = User.find_by(email: params[:session][:email].downcase)
     if user && user.authenticate(params[:session][:password])
       if user.activated?
+        begin
+          ActiveRecord::Base.transaction do
+            user.create_user_notification!(Notification::BODY_FIRST_LOGIN)
+            user.sign_in_count += 1
+            user.save!
+          end
+        rescue StandardError => e
+          Rails.logger.error e
+          flash[:warning] = "system error"
+          redirect_to(root_url) && return
+        end
+
         log_in user
         params[:session][:remember_me] == '1' ? remember(user) : forget(user)
         redirect_back_or user
