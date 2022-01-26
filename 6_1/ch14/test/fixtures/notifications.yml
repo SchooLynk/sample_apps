@@ -1,0 +1,9 @@
+notifications_one:
+  id: 1
+  body: 初回ログインありがとうございます。
+notifications_two:
+  id: 2
+  body: "%<name>sさんにフォローされました"
+notifications_three:
+  id: 3
+  body: "%<name>sさん他%<count>s名にフォローされました"

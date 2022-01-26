@@ -106,4 +106,104 @@ class UserTest < ActiveSupport::TestCase
       assert_not michael.feed.include?(post_unfollowed)
     end
   end
+
+  test ".create_user_notification! : 正常 : 初回ログイン" do
+    michael = users(:michael)
+
+    michael.create_user_notification!(Notification::BODY_FIRST_LOGIN)
+
+    # 通知が格納されている
+    assert_includes michael.user_notifications.map(&:gen_notification), "初回ログインありがとうございます。"
+
+    assert_difference "UserNotification.count", -1 do
+      michael.user_notifications.destroy_all
+    end
+  end
+
+  test ".create_user_notification! : 正常 : フォロー" do
+    michael = users(:michael)
+    archer  = users(:archer)
+
+    # archer をフォローする
+    archer.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: michael.id })
+
+    # archer に対して通知が格納されている
+    assert_includes archer.user_notifications.map(&:gen_notification), "Michael Exampleさんにフォローされました"
+
+    assert_difference "UserNotification.count", 0 do
+      michael.user_notifications.destroy_all
+    end
+  end
+
+  test ".create_user_notification! : 異常 : フォロー : 存在しないユーザー" do
+    michael = users(:michael)
+
+    # 存在しないユーザーからの通知なのでエラー
+    e = assert_raises ActiveRecord::RecordInvalid do
+      michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: 0 })
+    end
+
+    assert_equal "Validation failed: Option 存在しないユーザーです", e.message
+  end
+
+  test ".create_user_notification! : 異常 : フォロー : 自分自身をフォロー" do
+    michael = users(:michael)
+
+    # 自分自身にフォローされた通知は送れないのでエラー
+    e = assert_raises ActiveRecord::RecordInvalid do
+      michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: michael.id })
+    end
+
+    assert_equal "Validation failed: Option 自分自身に通知を送ろうとしています", e.message
+  end
+
+  test ".create_user_notification! : 正常 : 違うユーザーに5分以内にもう一度フォローされる" do
+    michael = users(:michael)
+    archer  = users(:archer)
+    lana    = users(:lana)
+
+    # lana と archer が michael をフォローされた場合の通知
+    michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: archer.id })
+    michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: lana.id })
+
+    # michaelに対して通知が格納されている
+    assert_includes michael.user_notifications.map(&:gen_notification), "Sterling Archerさん他1名にフォローされました"
+
+    assert_difference "UserNotification.count", -1 do
+      michael.user_notifications.destroy_all
+    end
+  end
+
+  test ".create_user_notification! : 正常 : 通知が混ざっている" do
+    michael = users(:michael)
+    archer  = users(:archer)
+    lana    = users(:lana)
+    malory  = users(:malory)
+
+    # ログイン
+    michael.create_user_notification!(Notification::BODY_FIRST_LOGIN)
+    # archer が michael をフォロー
+    michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: archer.id })
+
+    # 時間をすすめる
+    # TODO: マイクロ秒の指定ができないため 1秒 プラスして対応しています
+    travel_to(UserNotification::NOTIFICATION_ZIP_MINUTES.minutes.since + 1)
+
+    # lana と malory が michael をフォロー
+    michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: lana.id })
+    michael.create_user_notification!(Notification::BODY_FOLLOWED, { option_id: malory.id })
+
+    assert_equal(
+      michael.user_notifications.map(&:gen_notification),
+      [
+        "初回ログインありがとうございます。",
+        "Sterling Archerさんにフォローされました",
+        "Lana Kaneさん他1名にフォローされました"
+      ]
+    )
+
+    assert_difference "UserNotification.count", -3 do
+      michael.user_notifications.destroy_all
+    end
+  end
 end
