@@ -33,3 +33,8 @@ following = users[2..50]
 followers = users[3..40]
 following.each { |followed| user.follow(followed) }
 followers.each { |follower| follower.follow(user) }
+
+# 通知
+Notification.create!(body: "初回ログインありがとうございます。")
+Notification.create!(body: "%<name>sさんにフォローされました")
+Notification.create!(body: "%<name>sさん他%<count>s名にフォローされました")
