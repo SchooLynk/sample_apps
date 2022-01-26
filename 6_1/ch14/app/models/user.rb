@@ -8,6 +8,7 @@ class User < ApplicationRecord
                                    dependent:   :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
+  has_many :user_notifications, dependent: :destroy
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
   before_create :create_activation_digest
@@ -17,6 +18,7 @@ class User < ApplicationRecord
   validates :email, presence: true, length: { maximum: 255 },
                     format: { with: VALID_EMAIL_REGEX },
                     uniqueness: { case_sensitive: false }
+  validates :sign_in_count, presence: true
   has_secure_password
   validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
 
@@ -100,6 +102,29 @@ class User < ApplicationRecord
   # 現在のユーザーがフォローしてたらtrueを返す
   def following?(other_user)
     following.include?(other_user)
+  end
+
+  # 通知テーブルにデータを格納
+  def create_user_notification!(notification_id, **options)
+    case notification_id
+    when Notification::BODY_FIRST_LOGIN
+      user_notifications.build(notification_id: notification_id).save! if sign_in_count.zero?
+    when Notification::BODY_FOLLOWED
+      followed_notification = user_notifications.find_or_initialize_by(
+        notification_id: [Notification::BODY_FOLLOWED, Notification::BODY_FOLLOWED_ZIP],
+        notification_at: UserNotification::NOTIFICATION_ZIP_MINUTES.minutes.ago..Time.current
+      )
+
+      if followed_notification.new_record?
+        followed_notification.notification_id = Notification::BODY_FOLLOWED
+        followed_notification.option_id       = options[:option_id]
+      else
+        followed_notification.notification_id = Notification::BODY_FOLLOWED_ZIP
+        followed_notification.option          = followed_notification.option.to_i + 1
+      end
+
+      followed_notification.save!
+    end
   end
 
   private
