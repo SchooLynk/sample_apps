@@ -95,6 +95,10 @@ class User < ApplicationRecord
   # ユーザーをフォローする
   def follow(other_user)
     following << other_user
+    notification = other_user.notifications.build(
+      title: "#{name}さんにフォローされました", category: Notification.categories[:followed]
+      )
+    notification.save
   end
 
   # ユーザーをフォロー解除する

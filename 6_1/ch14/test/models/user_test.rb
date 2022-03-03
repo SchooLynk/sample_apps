@@ -82,7 +82,9 @@ class UserTest < ActiveSupport::TestCase
     michael  = users(:michael)
     archer   = users(:archer)
     assert_not michael.following?(archer)
-    michael.follow(archer)
+    assert_difference 'Notification.count', +1 do
+      michael.follow(archer)
+    end
     assert michael.following?(archer)
     assert archer.followers.include?(michael)
     michael.unfollow(archer)
