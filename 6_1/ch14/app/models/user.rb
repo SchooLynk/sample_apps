@@ -111,6 +111,26 @@ class User < ApplicationRecord
     following.include?(other_user)
   end
 
+   # 直近の通知を返す
+  def recent_notifications(category, minutes = Notification::MINUTES)
+    notifications.where(
+      is_read: false, category: category, created_at: minutes.minutes.ago..Time.current
+    )
+    end
+
+  # 直近の同種の通知をまとめる
+  def unite_recent_notifications(category, minutes = Notification::MINUTES)
+    notifications = recent_notifications(category, minutes)
+    return [] if notifications.count <= 1
+    title = Notification.generate_title(category, notifications)
+
+    ActiveRecord::Base.transaction do
+      notifications.map(&:destroy!)
+      notification = notifications.build(category: category, title: title)
+      notification.save!
+    end
+  end
+
   private
 
     # メールアドレスをすべて小文字にする
