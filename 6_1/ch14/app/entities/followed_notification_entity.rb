@@ -9,7 +9,6 @@ class FollowedNotificationEntity
     @follower_user_ids = @follower_user_ids + followednotificationEntity.follower_user_ids
   end
   def message
-    user_names = User.where(id: @follower_user_ids).pluck(:name).join('さん')
-    "#{user_names}さんにフォローされました"
+    User.find(@follower_user_ids.first).name + "さん他#{@follower_user_ids.count - 1}名にフォローされました"
   end
 end
