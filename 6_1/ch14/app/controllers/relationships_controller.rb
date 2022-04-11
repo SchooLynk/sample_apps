@@ -3,7 +3,10 @@ class RelationshipsController < ApplicationController
 
   def create
     @user = User.find(params[:followed_id])
-    current_user.follow(@user)
+    User.transaction do
+      current_user.follow(@user)
+      NotificationService.create_followed_notification(@user.id, current_user.id)
+    end
     respond_to do |format|
       format.html { redirect_to @user }
       format.js
@@ -18,4 +21,5 @@ class RelationshipsController < ApplicationController
       format.js
     end
   end
+
 end
