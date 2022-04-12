@@ -8,6 +8,7 @@ class User < ApplicationRecord
                                    dependent:   :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
+  has_many :notifications
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
   before_create :create_activation_digest
@@ -54,6 +55,8 @@ class User < ApplicationRecord
   def activate
     update_attribute(:activated,    true)
     update_attribute(:activated_at, Time.zone.now)
+
+    self.notifications.create!(category: :first_login, content: Notification::FIRST_LOGIN_NOTIFICATION_CONTENT)
   end
 
   # 有効化用のメールを送信する
@@ -90,6 +93,10 @@ class User < ApplicationRecord
   # ユーザーをフォローする
   def follow(other_user)
     following << other_user
+
+    follow_notification = other_user.notifications.new(category: :followed)
+    follow_notification.from_user_name = name
+    follow_notification.save!
   end
 
   # ユーザーをフォロー解除する

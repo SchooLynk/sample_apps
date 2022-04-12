@@ -106,4 +106,60 @@ class UserTest < ActiveSupport::TestCase
       assert_not michael.feed.include?(post_unfollowed)
     end
   end
+
+  test "should have notification when user is activated" do
+    @user.save
+
+    assert @user.notifications.blank?
+    assert_not @user.activated
+
+    @user.activate
+
+    assert @user.activated
+    assert_equal @user.notifications.first.content,  '初回ログインありがとうございます。'
+    assert_equal @user.notifications.first.category,  'first_login'
+  end
+
+  test "should have notification when followed user" do
+    archer   = users(:archer)
+
+    michael  = users(:michael)
+    travel_to Time.new(2022, 11, 11, 01, 01, 44) do
+      michael.follow(archer)
+
+      assert_equal archer.notifications.last.content,  "#{michael.name}さんにフォローされました。"
+      assert_equal archer.notifications.last.category,  'followed'
+      assert_equal archer.notifications.count,  1
+    end
+
+    # 5分以内に同じ種類の通知が発生する場合は一つの通知にまとめられる
+    lana    = users(:lana)
+    travel_to Time.new(2022, 11, 11, 01, 03, 44) do
+      lana.follow(archer)
+
+      assert_equal archer.notifications.last.content,  "#{lana.name}さん他1名にフォローされました。"
+      assert_equal archer.notifications.last.category,  'followed'
+      assert_equal archer.notifications.count,  1
+    end
+
+    # 5分以内に同じ種類の通知が発生する場合は一つの通知にまとめられる
+    malory    = users(:malory)
+    travel_to Time.new(2022, 11, 11, 01, 05, 44) do
+      malory.follow(archer)
+
+      assert_equal archer.notifications.last.content,  "#{malory.name}さん他2名にフォローされました。"
+      assert_equal archer.notifications.last.category,  'followed'
+      assert_equal archer.notifications.count,  1
+    end
+
+    # 5分以後に同じ種類の通知が発生する場合は一つの通知にまとめられない
+    user_1    = users(:user_1)
+    travel_to Time.new(2022, 11, 11, 01, 11, 44) do
+      user_1.follow(archer)
+
+      assert_equal archer.notifications.last.content,  "#{user_1.name}さんにフォローされました。"
+      assert_equal archer.notifications.last.category,  'followed'
+      assert_equal archer.notifications.count,  2
+    end
+  end
 end
