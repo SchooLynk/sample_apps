@@ -1,0 +1,11 @@
+one:
+  message: '初回ログインありがとうございます。'
+  message_type: 0,
+  is_checked: false,
+  user_id: 1
+
+two:
+  message: 'テストさんにフォローされました'
+  message_type: 1,
+  is_checked: false,
+  user_id: 1
