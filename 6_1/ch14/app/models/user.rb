@@ -55,6 +55,7 @@ class User < ApplicationRecord
   def activate
     update_attribute(:activated,    true)
     update_attribute(:activated_at, Time.zone.now)
+    self.notifications.build.create_first_login_message
   end
 
   # 有効化用のメールを送信する

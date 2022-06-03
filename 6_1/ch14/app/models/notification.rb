@@ -27,12 +27,17 @@ class Notification < ApplicationRecord
       notification.message = "#{follower.name}さんにフォローされました"
       notification.message_type = :followed
       notification.save!
-    elsif recent_notification_count == 1
-      recent_first_follower_name = recent_notifications.first.message.split('さん')[0]
-      cut_sentence = recent_notifications.first.message.split('さん他')
-      followed_count = cut_sentence.size == 1 ? 0 :  cut_sentence[1][0]&.to_i
-      recent_notifications.first.update(message: "#{recent_first_follower_name}さん他#{followed_count + 1}名にフォローされました")
-      recent_notifications.first.save!
+    else
+      notification = recent_notifications.last
+      recent_followers = followed.passive_relationships.where(created_at: (Time.now-5.minutes)..)
+      if recent_followers.count == 1
+        notification.message = "#{recent_followers.first.follower.name}さんにフォローされました"
+      else
+        recent_first_follower = recent_followers.first.follower
+        recent_follower_count_exclude_first_user = recent_followers.count - 1
+        notification.message = "#{recent_first_follower.name}さん他#{recent_follower_count_exclude_first_user}名にフォローされました"
+      end
+      notification.save!
     end
   end
 end
