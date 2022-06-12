@@ -89,6 +89,27 @@ class UserTest < ActiveSupport::TestCase
     assert_not michael.following?(archer)
   end
 
+  test "should get follow notifications" do
+    archer   = users(:archer)
+    michael  = users(:michael)
+    lana   = users(:lana)
+    malory   = users(:malory)
+    notification_1 = ['follow', 'Michael Exampleさんにフォローされました']
+    notification_2 = ['follow', 'Lana Kaneさん他1名にフォローされました']
+    notification_3 = ['follow', 'Malory Archerさん他2名にフォローされました']
+    assert_empty archer.followers
+    assert_empty archer.notifications
+    michael.follow(archer)
+    assert_equal archer.notifications.pluck(:notification_type, :text), [notification_1]
+    assert_equal archer.notifications.count, 1
+    lana.follow(archer)
+    assert_equal archer.notifications.pluck(:notification_type, :text), [notification_2]
+    assert_equal archer.notifications.count, 1
+    malory.follow(archer)
+    assert_equal archer.notifications.pluck(:notification_type, :text), [notification_3]
+    assert_equal archer.notifications.count, 1
+  end
+
   test "feed should have the right posts" do
     michael = users(:michael)
     archer  = users(:archer)
