@@ -90,37 +90,39 @@ class User < ApplicationRecord
 
   # ユーザーをフォローする
   def follow(other_user)
-    following << other_user
+    User.transaction do 
+      following << other_user
 
-    # 通知管理
-    followers_count = other_user.passive_relationships.where('created_at >= ?', 5.minutes.ago).count
-    
-    if followers_count > 1
-      # 5分以内複数のユーザーがフォローした場合、最新の通知更新する
-      text = "#{self.name}さん他#{followers_count - 1}名にフォローされました"
-      other_user.last_follow_notification.update({
-        :text => text
-      })
-    else
-      # 最新の通知から5分ん以上、作成する
-      text = "#{self.name}さんにフォローされました"
-      Notification.create({
-        :user => other_user,
-        :notification_type => 'follow',
-        :text => text
-      })
-    end
-
-    # フォローされたユーザーに通知配信する
-    NotificationsChannel.broadcast_to(
-      other_user,
-      content: other_user.notifications.order({updated_at: :desc}).map do |n|
-        {
-          :text => n.text,
-          :time => n.time
-        }
+      # 通知管理
+      followers_count = other_user.passive_relationships.where('created_at >= ?', 5.minutes.ago).count
+      
+      if followers_count > 1
+        # 5分以内複数のユーザーがフォローした場合、最新の通知更新する
+        text = "#{self.name}さん他#{followers_count - 1}名にフォローされました"
+        other_user.last_follow_notification.update({
+          :text => text
+        })
+      else
+        # 最新の通知から5分ん以上、作成する
+        text = "#{self.name}さんにフォローされました"
+        Notification.create({
+          :user => other_user,
+          :notification_type => 'follow',
+          :text => text
+        })
       end
-    )
+
+      # フォローされたユーザーに通知配信する
+      NotificationsChannel.broadcast_to(
+        other_user,
+        content: other_user.notifications.order({updated_at: :desc}).map do |n|
+          {
+            :text => n.text,
+            :time => n.time
+          }
+        end
+      )
+    end
   end
 
   # ユーザーをフォロー解除する
