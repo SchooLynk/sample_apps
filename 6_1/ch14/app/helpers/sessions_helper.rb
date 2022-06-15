@@ -2,6 +2,7 @@ module SessionsHelper
   # 渡されたユーザーでログインする
   def log_in(user)
     session[:user_id] = user.id
+    user.logged_in remote_ip: request.remote_ip
   end
 
   # ユーザーのセッションを永続的にする
