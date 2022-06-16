@@ -1,5 +1,11 @@
 require 'rails_helper'
 
 RSpec.describe SignedIn, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+	describe "notify" do
+		subject { create :signed_in }
+
+		it do
+			expect { subject }.to change(Notification, :count).by(1)
+		end
+	end
 end

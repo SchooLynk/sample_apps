@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_06_15_105746) do
+ActiveRecord::Schema.define(version: 2022_06_15_112838) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -47,6 +47,20 @@ ActiveRecord::Schema.define(version: 2022_06_15_105746) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id", "created_at"], name: "index_microposts_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_microposts_on_user_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "notificatable_type", null: false
+    t.integer "notificatable_id", null: false
+    t.integer "parent_id"
+    t.integer "children_count", default: 1, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["notificatable_type", "notificatable_id"], name: "index_notifications_on_notificatable"
+    t.index ["parent_id"], name: "index_notifications_on_parent_id"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "relationships", force: :cascade do |t|
@@ -88,5 +102,6 @@ ActiveRecord::Schema.define(version: 2022_06_15_105746) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "microposts", "users"
+  add_foreign_key "notifications", "users"
   add_foreign_key "signed_ins", "users"
 end
