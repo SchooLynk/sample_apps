@@ -20,4 +20,16 @@ class RelationshipTest < ActiveSupport::TestCase
     @relationship.followed_id = nil
     assert_not @relationship.valid?
   end
+
+  test 'should create with notice' do
+    @relationship.save
+    assert @relationship.notice
+  end
+
+  test 'should destroy with notice' do
+    before_count = RelationshipNotice.count
+    @relationship.save
+    @relationship.destroy
+    assert_equal RelationshipNotice.count, before_count
+  end
 end
