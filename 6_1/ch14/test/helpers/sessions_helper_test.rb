@@ -16,4 +16,14 @@ class SessionsHelperTest < ActionView::TestCase
     @user.update_attribute(:remember_digest, User.digest(User.new_token))
     assert_nil current_user
   end
+
+  test 'should increment login_count if login_count == 1 create FirstLoginNotice' do
+    log_in @user
+    assert_equal 1, @user.login_count
+    assert @user.first_login_notice
+    log_out
+    log_in @user
+    assert_equal 2, @user.login_count
+    assert_equal 1, FirstLoginNotice.count
+  end
 end

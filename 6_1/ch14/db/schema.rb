@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_06_26_140022) do
+ActiveRecord::Schema.define(version: 2022_06_26_143818) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -38,6 +38,14 @@ ActiveRecord::Schema.define(version: 2022_06_26_140022) do
     t.integer "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "first_login_notices", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "read", default: 0, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_first_login_notices_on_user_id", unique: true
   end
 
   create_table "microposts", force: :cascade do |t|
@@ -80,11 +88,13 @@ ActiveRecord::Schema.define(version: 2022_06_26_140022) do
     t.datetime "activated_at"
     t.string "reset_digest"
     t.datetime "reset_sent_at"
+    t.integer "login_count", default: 0
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "first_login_notices", "users"
   add_foreign_key "microposts", "users"
   add_foreign_key "relationship_notices", "relationships"
 end

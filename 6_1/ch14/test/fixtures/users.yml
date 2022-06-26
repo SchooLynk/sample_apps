@@ -5,6 +5,7 @@ michael:
   admin: true
   activated: true
   activated_at: <%= Time.zone.now %>
+  login_count: 0
 
 archer:
   name: Sterling Archer

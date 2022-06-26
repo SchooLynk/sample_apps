@@ -1,6 +1,8 @@
 module SessionsHelper
   # 渡されたユーザーでログインする
   def log_in(user)
+    user.increment!(:login_count)
+    FirstLoginNotice.create(user: user) if user.login_count == 1
     session[:user_id] = user.id
   end
 
