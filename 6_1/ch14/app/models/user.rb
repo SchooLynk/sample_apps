@@ -8,6 +8,7 @@ class User < ApplicationRecord
                                    dependent:   :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
+  has_many :notifications, dependent: :destroy
   attr_accessor :remember_token, :activation_token, :reset_token
   before_save   :downcase_email
   before_create :create_activation_digest
@@ -54,6 +55,7 @@ class User < ApplicationRecord
   def activate
     update_attribute(:activated,    true)
     update_attribute(:activated_at, Time.zone.now)
+    self.notifications.build.create_first_login_message
   end
 
   # 有効化用のメールを送信する
@@ -100,6 +102,21 @@ class User < ApplicationRecord
   # 現在のユーザーがフォローしてたらtrueを返す
   def following?(other_user)
     following.include?(other_user)
+  end
+
+  # フォローされた際に通知が作られる
+  def create_notification_follow!(current_user)
+    temp = Notification.where(["visitor_id = ? and visited_id = ? ",current_user.id, id])
+    if temp.blank?
+      notification = current_user.active_notifications.new(visited_id: id, action: 'follow')
+      notification.save if notification.valid?
+    end
+  end
+
+  # 初回ログイン時に通知が作られる
+  def create_notification_first_login
+    notification = self.active_notifications.new(visited_id: id, action: 'first_login')
+    notification.save if notification.valid?
   end
 
   private
